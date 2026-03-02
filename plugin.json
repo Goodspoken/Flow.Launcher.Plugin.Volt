@@ -3,10 +3,10 @@
   "ActionKeyword": "volt",
   "Name": "Volt",
   "Description": "Управление схемами питания Windows 11 (High-Performance/Balanced/Power Saver)",
-  "Author": "Antigravity",
-  "Version": "1.1.0",
+  "Author": "Goodspoken",
+  "Version": "1.1.1",
   "Language": "python",
-  "Website": "",
+  "Website": "https://github.com/Goodspoken/Flow.Launcher.Plugin.Volt",
   "IcoPath": "Images/app.png",
   "ExecuteFileName": "main.py"
 }
