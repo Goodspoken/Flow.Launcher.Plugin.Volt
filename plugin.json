@@ -1,0 +1,12 @@
+{
+  "ID": "power-manager-fcd54b2d",
+  "ActionKeyword": "power",
+  "Name": "Power Manager",
+  "Description": "Управление схемами питания Windows 11",
+  "Author": "Antigravity",
+  "Version": "1.0.0",
+  "Language": "python",
+  "Website": "",
+  "IcoPath": "Images/app.png",
+  "ExecuteFileName": "main.py"
+}
