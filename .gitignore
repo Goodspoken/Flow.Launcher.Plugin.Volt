@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+tests/__pycache__/
+lib/__pycache__/
+.pytest_cache/
+.agent/
+.agents/
+docs/plans/
+*.zip
+.vscode/
+scripts/gen_icons.py
