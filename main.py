@@ -1,12 +1,13 @@
 import sys
 import subprocess
 
-try:
-    from flowlauncher import FlowLauncher
-except ImportError:
-    class FlowLauncher:
-        def __init__(self):
-            pass
+import os
+
+plugindir = os.path.abspath(os.path.dirname(__file__))
+sys.path.append(plugindir)
+sys.path.append(os.path.join(plugindir, "lib"))
+
+from flowlauncher import FlowLauncher
 
 class PowerManager(FlowLauncher):
     def query(self, query):
