@@ -33,9 +33,13 @@ Search for `Volt` in Flow Launcher or type:
 - Windows 10/11
 - Python 3.x (bundled with Flow Launcher)
 
+## Known Issues
+
+- **Cached results:** When opening Flow Launcher via history (re-opening a previous `volt` query), the active plan status may not refresh. Typing `volt` fresh always shows the correct status. This is a Flow Launcher caching limitation.
+
 ## Development
 
-The plugin is written in Python and uses the built-in Windows `powercfg` utility.
+The plugin is written in Python and uses the Win32 API (`powrprof.dll`) for instant power plan switching — no `subprocess` calls in the main path.
 All dependencies are bundled in the `lib` folder for out-of-the-box functionality.
 
 ---

@@ -3,9 +3,17 @@ __pycache__/
 tests/__pycache__/
 lib/__pycache__/
 .pytest_cache/
+.mypy_cache/
+.ruff_cache/
 .agent/
 .agents/
+.venv/
 docs/plans/
 *.zip
 .vscode/
 scripts/gen_icons.py
+volt_debug.log
+test_verify.py
+test_switch.py
+test_active.py
+debug_guid.py

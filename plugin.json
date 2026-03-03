@@ -4,7 +4,7 @@
   "Name": "Volt",
   "Description": "Control Windows 11 power plans (High Performance, Balanced, Power Saver)",
   "Author": "Goodspoken",
-  "Version": "1.1.2",
+  "Version": "1.2.7",
   "Language": "python",
   "Website": "https://github.com/Goodspoken/Flow.Launcher.Plugin.Volt",
   "IcoPath": "Images/app.png",
