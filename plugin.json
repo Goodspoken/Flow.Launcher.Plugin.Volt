@@ -1,10 +1,10 @@
 {
-  "ID": "volt-power-manager-fcd54b2d",
+  "ID": "9e54a3a6-b9a3-41bb-a0db-75ebff0aed45",
   "ActionKeyword": "volt",
   "Name": "Volt",
   "Description": "Control Windows 11 power plans (High Performance, Balanced, Power Saver)",
   "Author": "Goodspoken",
-  "Version": "1.2.7",
+  "Version": "1.2.8",
   "Language": "python",
   "Website": "https://github.com/Goodspoken/Flow.Launcher.Plugin.Volt",
   "IcoPath": "Images/app.png",
