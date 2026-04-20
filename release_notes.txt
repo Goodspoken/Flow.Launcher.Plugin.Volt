@@ -1,0 +1,4 @@
+## v1.2.8
+
+- **Store Compliance**: Updated internal plugin identifier to strictly conform to UUIDv4 specifications, resolving Flow Launcher validation failures during store submission.
+- **Store Compliance**: Bumped version to 1.2.8 for release sync.

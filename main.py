@@ -3,6 +3,7 @@ import sys
 import ctypes
 import ctypes.wintypes
 import subprocess
+import uuid
 from typing import Any, Dict, List, Optional
 
 # Flow Launcher requires plugins to append to path before importing flowlauncher library
@@ -64,31 +65,45 @@ POWER_PLANS = [
 # --- Helper functions ---
 
 def guid_from_string(guid_str: str) -> GUID:
-    """Parse a GUID string like '8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c' into a GUID struct.
-    
-    Pure Python — no ole32.dll dependency.
-    """
-    parts = guid_str.strip().lower().split("-")
-    # parts: ['8c5e7fda', 'e8bf', '4a96', '9a85', 'a6e23a8c635c']
+    """Parse a GUID string into a Win32 GUID struct using the uuid module."""
+    u = uuid.UUID(guid_str)
     g = GUID()
-    g.Data1 = int(parts[0], 16)
-    g.Data2 = int(parts[1], 16)
-    g.Data3 = int(parts[2], 16)
-    # Data4 is 8 bytes: first 2 from parts[3], last 6 from parts[4]
-    d4_hex = parts[3] + parts[4]  # '9a85' + 'a6e23a8c635c' = 16 hex chars = 8 bytes
+    # Data1, Data2, Data3 are simple
+    g.Data1, g.Data2, g.Data3 = u.fields[0], u.fields[1], u.fields[2]
+    # Data4 is 8 bytes
+    for i, b in enumerate(u.bytes[10:]): # Data4 starts at index 10 in bytes (after D1, D2, D3)
+        # Wait, UUID.bytes order is Big Endian. Win32 GUID is Mixed Endian.
+        # Data1 (4), Data2 (2), Data3 (2) are Little Endian in memory, Data4 (8) is Big Endian.
+        # But u.bytes is full Big Endian.
+        pass
+    
+    # Actually, u.bytes_le is better but it's not exactly what we need for the fields.
+    # Let's use the fields directly from bytes_le or just use the existing logic if it was reliable.
+    # Re-implementing correctly:
+    b = u.bytes_le
+    g.Data1 = int.from_bytes(b[0:4], "little")
+    g.Data2 = int.from_bytes(b[4:6], "little")
+    g.Data3 = int.from_bytes(b[6:8], "little")
     for i in range(8):
-        g.Data4[i] = int(d4_hex[i*2:i*2+2], 16)
+        g.Data4[i] = b[8+i]
     return g
 
 
 def get_battery_info() -> str:
-    """Retrieve Windows system power status string."""
+    """Retrieve Windows system power status string with charging detection."""
     try:
         status = SystemPowerStatus()
         if ctypes.windll.kernel32.GetSystemPowerStatus(ctypes.byref(status)):
             percent = status.BatteryLifePercent
+            is_charging = bool(status.BatteryFlag & 8)
+            
             if status.ACLineStatus == 1:
-                return f"[⚡ Сеть {percent}%]" if percent <= 100 else "[⚡ Сеть]"
+                prefix = "⚡ Сеть"
+                if is_charging:
+                    prefix = "⚡ Зарядка"
+                elif percent >= 100:
+                    prefix = "⚡ Полный заряд"
+                return f"[{prefix} {percent}%]" if percent <= 100 else f"[{prefix}]"
             elif status.ACLineStatus == 0:
                 return f"[🔋 Батарея {percent}%]" if percent <= 100 else "[🔋 Батарея]"
     except Exception:
@@ -164,34 +179,56 @@ class PowerManager(FlowLauncher):
                 },
             })
 
+        # 4. Add "Open Power Settings" shortcut (fixed 4th position)
+        results.append({
+            "Title": "Настройки электропитания",
+            "SubTitle": "Открыть системные настройки Windows",
+            "IcoPath": "Images/app.png",
+            "Score": 0,
+            "JsonRPCAction": {
+                "method": "open_settings",
+                "parameters": [],
+                "dontHideAfterAction": False,
+            },
+        })
+
         return results
 
     def set_power_plan(self, guid_str: str) -> None:
-        """Switch power plan. Uses Win32 API first, falls back to non-blocking powercfg."""
+        """Switch power plan and broadcast changes to the system."""
         switched = False
 
-        # Primary: Win32 API (instant, no subprocess)
+        # Primary: Win32 API (instant)
         try:
             guid = guid_from_string(guid_str)
             res = ctypes.windll.powrprof.PowerSetActiveScheme(None, ctypes.byref(guid))
             if res == 0:
                 switched = True
+                # Broadcast setting change so system UI (taskbar) updates immediately
+                ctypes.windll.user32.SendMessageTimeoutW(0xFFFF, 0x001A, 0, "Environment", 0x0002, 100, None)
             else:
-                _log_error(f"PowerSetActiveScheme returned error code: {res}")
+                _log_error(f"PowerSetActiveScheme error: {res}")
         except Exception as e:
             _log_error(f"Win32 API exception: {e}")
 
-        # Fallback: non-blocking powercfg (Popen, NOT run — avoids freeze)
+        # Fallback: powercfg
         if not switched:
             try:
                 subprocess.Popen(
                     ["powercfg", "/setactive", guid_str],
-                    creationflags=0x08000000,  # CREATE_NO_WINDOW
+                    creationflags=0x08000000,
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                 )
             except Exception as e:
                 _log_error(f"Powercfg fallback exception: {e}")
+
+    def open_settings(self) -> None:
+        """Open Windows Power & Sleep settings."""
+        try:
+            os.startfile("ms-settings:powersleep")
+        except Exception as e:
+            _log_error(f"Failed to open settings: {e}")
 
 
 if __name__ == "__main__":
