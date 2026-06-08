@@ -1,3 +1,6 @@
-Bump version to v1.2.8 and assign valid v4 UUID
-
-To comply with the new Flow Launcher Plugin Store validation rules, the plugin ID has been updated to a perfectly formatted UUIDv4. As this alters the manifest significantly, version bumped to 1.2.8.
+## What's Changed
+- **Simpler GUID handling**: Switched to `uuid` module for better performance and reliability.
+- **Enhanced Battery Info**: Added detection for charging and full charge status in the results subtitle.
+- **New Shortcut**: Added 'Open Power Settings' (4th item) to quickly access system settings (`ms-settings:powersleep`).
+- **Instant UI Reactivity**: Implemented `WM_SETTINGCHANGE` broadcast to ensure system-wide UI updates (like the taskbar battery icon) immediately after switching plans.
+- **Cleanup**: Removed unused dependencies and updated internal documentation.

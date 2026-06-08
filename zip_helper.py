@@ -17,5 +17,5 @@ def create_zip(zip_name, files_and_dirs):
 
 if __name__ == '__main__':
     items_to_zip = ['main.py', 'plugin.json', 'README.md', 'LICENSE', 'Images', 'lib']
-    create_zip('Volt-v1.2.8.zip', items_to_zip)
-    print("Created Volt-v1.2.8.zip")
+    create_zip('Volt-v1.2.9.zip', items_to_zip)
+    print("Created Volt-v1.2.9.zip")

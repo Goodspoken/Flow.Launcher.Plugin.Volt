@@ -59,6 +59,13 @@ POWER_PLANS = [
         "RussianName": "Экономия энергии",
         "Guid": "a1841308-3541-4fab-bc81-f71556f20b4a",
         "Icon": "Images/saver.png"
+    },
+    {
+        "Name": "Ultimate Performance",
+        "RussianName": "Максимальная производительность",
+        "Guid": "e9a42b02-d5df-448d-aa00-03f14749eb61",
+        "Icon": "Images/high.png",
+        "Optional": True
     }
 ]
 
@@ -68,24 +75,9 @@ def guid_from_string(guid_str: str) -> GUID:
     """Parse a GUID string into a Win32 GUID struct using the uuid module."""
     u = uuid.UUID(guid_str)
     g = GUID()
-    # Data1, Data2, Data3 are simple
     g.Data1, g.Data2, g.Data3 = u.fields[0], u.fields[1], u.fields[2]
-    # Data4 is 8 bytes
-    for i, b in enumerate(u.bytes[10:]): # Data4 starts at index 10 in bytes (after D1, D2, D3)
-        # Wait, UUID.bytes order is Big Endian. Win32 GUID is Mixed Endian.
-        # Data1 (4), Data2 (2), Data3 (2) are Little Endian in memory, Data4 (8) is Big Endian.
-        # But u.bytes is full Big Endian.
-        pass
-    
-    # Actually, u.bytes_le is better but it's not exactly what we need for the fields.
-    # Let's use the fields directly from bytes_le or just use the existing logic if it was reliable.
-    # Re-implementing correctly:
-    b = u.bytes_le
-    g.Data1 = int.from_bytes(b[0:4], "little")
-    g.Data2 = int.from_bytes(b[4:6], "little")
-    g.Data3 = int.from_bytes(b[6:8], "little")
     for i in range(8):
-        g.Data4[i] = b[8+i]
+        g.Data4[i] = u.bytes[8 + i]
     return g
 
 
@@ -126,6 +118,36 @@ def get_active_power_scheme_guid() -> Optional[str]:
         return None
 
 
+def is_power_scheme_installed(guid_str: str) -> bool:
+    """Check if a power scheme GUID is installed on the system using PowerEnumerate."""
+    if sys.platform != "win32":
+        return False
+    try:
+        scheme_guid = GUID()
+        size = ctypes.c_ulong(ctypes.sizeof(GUID))
+        index = 0
+        target = guid_str.lower()
+        while True:
+            res = ctypes.windll.powrprof.PowerEnumerate(
+                None,
+                None,
+                None,
+                16,  # ACCESS_SCHEME
+                index,
+                ctypes.byref(scheme_guid),
+                ctypes.byref(size)
+            )
+            if res != 0:
+                break
+            if str(scheme_guid).lower() == target:
+                return True
+            index += 1
+            size = ctypes.c_ulong(ctypes.sizeof(GUID))
+    except Exception:
+        pass
+    return False
+
+
 def _log_error(msg: str) -> None:
     """Write error to a log file next to the plugin for diagnostics."""
     try:
@@ -150,6 +172,11 @@ class PowerManager(FlowLauncher):
             name = plan["RussianName"]
             eng_name = plan["Name"]
             guid = plan["Guid"].lower()
+
+            # Optional plans are only shown if they are currently active or installed
+            if plan.get("Optional"):
+                if active_guid != guid and not is_power_scheme_installed(guid):
+                    continue
 
             # Simple filtering: match Russian or English name
             if q and q not in name.lower() and q not in eng_name.lower():

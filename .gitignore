@@ -17,3 +17,4 @@ test_verify.py
 test_switch.py
 test_active.py
 debug_guid.py
+conductor/
